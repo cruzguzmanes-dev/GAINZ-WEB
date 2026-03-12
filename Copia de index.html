@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gainz — Vocabulary CMS</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Epilogue:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0c0f;
+    --surface: #131318;
+    --surface2: #1a1a22;
+    --border: #252530;
+    --border2: #2e2e3c;
+    --accent: #7c6dfa;
+    --accent2: #a593ff;
+    --accent-glow: rgba(124,109,250,0.15);
+    --green: #3dd68c;
+    --red: #f46e6e;
+    --text: #e8e8f0;
+    --text2: #9090a8;
+    --text3: #5a5a72;
+    --en: #7c6dfa;
+    --es: #3dd68c;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Epilogue', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(12,12,15,0.9);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .logo-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .logo-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    background: var(--accent-glow);
+    border: 1px solid var(--accent);
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .supabase-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    padding: 6px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text3);
+  }
+  .dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot.error { background: var(--red); }
+
+  /* ── LAYOUT ── */
+  .app {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: calc(100vh - 65px);
+  }
+
+  /* ── SIDEBAR ── */
+  aside {
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    position: sticky;
+    top: 65px;
+    height: calc(100vh - 65px);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 0 20px;
+    margin-bottom: 8px;
+  }
+
+  .categories-list {
+    list-style: none;
+    flex: 1;
+  }
+
+  .category-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .category-item:hover { background: var(--surface); }
+
+  .category-item.active {
+    background: var(--accent-glow);
+    border-left-color: var(--accent);
+  }
+
+  .category-item.active .cat-name { color: var(--accent2); }
+
+  .cat-emoji {
+    font-size: 18px;
+    width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .cat-info { flex: 1; min-width: 0; }
+
+  .cat-name {
+    color: var(--text);
+    font-weight: 500;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cat-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 1px;
+  }
+
+  .cat-actions {
+    display: none;
+    gap: 4px;
+  }
+
+  .category-item:hover .cat-actions { display: flex; }
+
+  .btn-icon {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: var(--surface2);
+    color: var(--text2);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.15s;
+  }
+  .btn-icon:hover { background: var(--border2); color: var(--text); }
+  .btn-icon.danger:hover { background: rgba(244,110,110,0.15); color: var(--red); }
+
+  .sidebar-bottom {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+  }
+
+  .btn-new-category {
+    width: 100%;
+    padding: 10px;
+    background: var(--accent-glow);
+    border: 1px dashed var(--accent);
+    color: var(--accent2);
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Epilogue', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.15s;
+  }
+  .btn-new-category:hover {
+    background: rgba(124,109,250,0.2);
+  }
+
+  /* ── MAIN ── */
+  main {
+    padding: 32px;
+    max-width: 900px;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    gap: 16px;
+    text-align: center;
+  }
+
+  .empty-icon {
+    font-size: 48px;
+    opacity: 0.3;
+  }
+
+  .empty-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 24px;
+    color: var(--text2);
+  }
+
+  .empty-sub {
+    color: var(--text3);
+    max-width: 280px;
+    line-height: 1.6;
+  }
+
+  /* ── CATEGORY HEADER ── */
+  .cat-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    gap: 16px;
+  }
+
+  .cat-header-left { display: flex; align-items: center; gap: 14px; }
+
+  .cat-header-emoji {
+    font-size: 40px;
+    line-height: 1;
+  }
+
+  .cat-header-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 30px;
+    letter-spacing: -0.5px;
+  }
+
+  .cat-header-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+
+  .btn-primary {
+    padding: 9px 18px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Epilogue', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+
+  /* ── WORDS LIST ── */
+  .words-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .word-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+    animation: slideIn 0.2s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .word-card:hover { border-color: var(--border2); }
+
+  .word-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    cursor: pointer;
+    gap: 12px;
+  }
+
+  .word-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--text);
+  }
+
+  .word-es {
+    font-size: 13px;
+    color: var(--es);
+    font-weight: 500;
+  }
+
+  .word-card-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .word-body {
+    display: none;
+    padding: 0 18px 18px;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+    gap: 16px;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .word-body.open {
+    display: grid;
+  }
+
+  .lang-block {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 14px;
+    border: 1px solid var(--border);
+  }
+
+  .lang-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .lang-label.en { color: var(--en); }
+  .lang-label.es { color: var(--es); }
+
+  .lang-label::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .field-label {
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .field-value {
+    color: var(--text2);
+    line-height: 1.6;
+    margin-bottom: 12px;
+    font-size: 13px;
+  }
+
+  .examples-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .examples-list li {
+    color: var(--text2);
+    font-size: 12px;
+    line-height: 1.5;
+    padding-left: 12px;
+    border-left: 2px solid var(--border2);
+    font-style: italic;
+  }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 760px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalIn 0.2s ease;
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.96) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    z-index: 1;
+  }
+
+  .modal-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+  }
+
+  .btn-close {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .btn-close:hover { background: var(--surface2); color: var(--text); }
+
+  .modal-body {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 11px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'DM Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  label .lang-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  label .lang-dot.en { background: var(--en); }
+  label .lang-dot.es { background: var(--es); }
+
+  input, textarea {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: 'Epilogue', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+    resize: vertical;
+  }
+
+  input:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  input::placeholder, textarea::placeholder { color: var(--text3); }
+
+  .form-divider {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .lang-section {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .lang-section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .lang-section-header.en { color: var(--en); }
+  .lang-section-header.es { color: var(--es); }
+
+  .examples-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .example-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .example-row input { flex: 1; }
+
+  .btn-add-example {
+    background: none;
+    border: 1px dashed var(--border2);
+    color: var(--text3);
+    border-radius: 6px;
+    padding: 7px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: 'Epilogue', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+    width: 100%;
+    justify-content: center;
+  }
+  .btn-add-example:hover { border-color: var(--text3); color: var(--text2); }
+
+  .modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .btn-secondary {
+    padding: 9px 18px;
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Epilogue', sans-serif;
+    font-size: 13px;
+    transition: all 0.15s;
+  }
+  .btn-secondary:hover { background: var(--surface2); color: var(--text); }
+
+  /* ── CATEGORY MODAL ── */
+  .emoji-picker {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  .emoji-opt {
+    font-size: 20px;
+    text-align: center;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.1s;
+    border: 2px solid transparent;
+  }
+  .emoji-opt:hover { background: var(--surface2); }
+  .emoji-opt.selected { border-color: var(--accent); background: var(--accent-glow); }
+
+  /* ── SUPABASE PANEL ── */
+  .supabase-panel {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 480px;
+    animation: modalIn 0.2s ease;
+  }
+
+  .config-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .config-field:last-child { margin-bottom: 0; }
+
+  .json-preview {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    line-height: 1.7;
+    white-space: pre;
+    overflow-x: auto;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .json-key { color: var(--accent2); }
+  .json-str { color: var(--green); }
+  .json-num { color: #f9a74b; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 13px;
+    color: var(--text);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all 0.25s ease;
+    pointer-events: none;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-left: 3px solid var(--green); }
+  .toast.error { border-left: 3px solid var(--red); }
+
+  /* ── SEARCH ── */
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    margin-bottom: 20px;
+  }
+
+  .search-bar input {
+    background: none;
+    border: none;
+    padding: 0;
+    flex: 1;
+    font-size: 13px;
+  }
+
+  .search-bar input:focus { box-shadow: none; }
+
+  .search-icon { color: var(--text3); font-size: 14px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <span class="logo-title">Gainz</span>
+    <span class="logo-badge">Vocab CMS</span>
+  </div>
+  <div class="header-actions">
+    <div class="supabase-status" id="sbStatus">
+      <div class="dot" id="sbDot"></div>
+      <span id="sbLabel">No conectado</span>
+    </div>
+    <button class="btn-primary" onclick="openSupabaseConfig()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text2);">
+      ⚙️ Supabase
+    </button>
+  </div>
+</header>
+
+<!-- APP -->
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside>
+    <div class="sidebar-section-label">Categorías</div>
+    <ul class="categories-list" id="categoriesList"></ul>
+    <div class="sidebar-bottom">
+      <button class="btn-new-category" onclick="openCategoryModal()">
+        <span>＋</span> Nueva categoría
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="mainContent">
+    <div class="empty-state">
+      <div class="empty-icon">📚</div>
+      <div class="empty-title">Selecciona una categoría</div>
+      <div class="empty-sub">Elige una categoría del panel izquierdo o crea una nueva para empezar a agregar palabras.</div>
+    </div>
+  </main>
+</div>
+
+<!-- ── WORD MODAL ── -->
+<div class="modal-overlay" id="wordModal">
+  <div class="modal" style="max-width:800px">
+    <div class="modal-header">
+      <div class="modal-title" id="wordModalTitle">Nueva palabra</div>
+      <button class="btn-close" onclick="closeWordModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="form-group">
+        <label>Palabra / Term</label>
+        <input type="text" id="fWord" placeholder="e.g. leverage">
+      </div>
+
+      <div class="form-divider">
+        <!-- EN -->
+        <div class="lang-section">
+          <div class="lang-section-header en">🇺🇸 English</div>
+          <div class="form-group">
+            <label><span class="lang-dot en"></span> Definition EN</label>
+            <textarea id="fDefEn" rows="3" placeholder="The use of borrowed capital to increase potential return..."></textarea>
+          </div>
+          <div class="form-group">
+            <label><span class="lang-dot en"></span> Examples EN</label>
+            <div class="examples-input-group" id="examplesEnGroup">
+              <div class="example-row">
+                <input type="text" placeholder="She used her network to leverage the deal.">
+                <button class="btn-icon danger" onclick="removeExample(this)">✕</button>
+              </div>
+            </div>
+            <button class="btn-add-example" onclick="addExample('en')">＋ Add example</button>
+          </div>
+        </div>
+
+        <!-- ES -->
+        <div class="lang-section">
+          <div class="lang-section-header es">🇲🇽 Español</div>
+          <div class="form-group">
+            <label><span class="lang-dot es"></span> Significado ES</label>
+            <textarea id="fMeanEs" rows="3" placeholder="Usar recursos o influencia para obtener ventaja..."></textarea>
+          </div>
+          <div class="form-group">
+            <label><span class="lang-dot es"></span> Usos ES</label>
+            <div class="examples-input-group" id="examplesEsGroup">
+              <div class="example-row">
+                <input type="text" placeholder="Hay que aprovechar cada oportunidad.">
+                <button class="btn-icon danger" onclick="removeExample(this)">✕</button>
+              </div>
+            </div>
+            <button class="btn-add-example" onclick="addExample('es')">＋ Agregar uso</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeWordModal()">Cancelar</button>
+      <button class="btn-primary" onclick="saveWord()">💾 Guardar palabra</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CATEGORY MODAL ── -->
+<div class="modal-overlay" id="catModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <div class="modal-title">Nueva categoría</div>
+      <button class="btn-close" onclick="closeCatModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" id="fCatName" placeholder="e.g. Business English">
+      </div>
+      <div class="form-group">
+        <label>Emoji</label>
+        <div class="emoji-picker" id="emojiPicker">
+          💼 📈 🏋️ 🧠 🌍 🎯 💡 🔥 🎓 💪 🚀 ⚡ 🎨 🏆 💬 📱 🌱 🔑 ✨ 🎵 🍎 🏃 💻 🌐
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeCatModal()">Cancelar</button>
+      <button class="btn-primary" onclick="saveCategory()">Crear categoría</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SUPABASE CONFIG ── -->
+<div class="modal-overlay" id="supabaseModal">
+  <div class="supabase-panel">
+    <div class="modal-header">
+      <div class="modal-title">Configurar Supabase</div>
+      <button class="btn-close" onclick="closeSupabaseConfig()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="config-field">
+        <label>Project URL</label>
+        <input type="text" id="sbUrl" placeholder="https://xxxx.supabase.co">
+      </div>
+      <div class="config-field">
+        <label>Anon Key</label>
+        <input type="password" id="sbKey" placeholder="eyJhbGciOiJIUzI1NiIsIn...">
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:12px;color:var(--text3);line-height:1.7;">
+        <strong style="color:var(--text2);">SQL para crear las tablas:</strong><br><br>
+        <code style="font-family:'DM Mono',monospace;font-size:11px;color:var(--accent2);">
+          CREATE TABLE categories (<br>
+          &nbsp;&nbsp;id uuid DEFAULT gen_random_uuid() PRIMARY KEY,<br>
+          &nbsp;&nbsp;name text NOT NULL,<br>
+          &nbsp;&nbsp;emoji text,<br>
+          &nbsp;&nbsp;created_at timestamptz DEFAULT now()<br>
+          );<br><br>
+          CREATE TABLE words (<br>
+          &nbsp;&nbsp;id uuid DEFAULT gen_random_uuid() PRIMARY KEY,<br>
+          &nbsp;&nbsp;category_id uuid REFERENCES categories(id) ON DELETE CASCADE,<br>
+          &nbsp;&nbsp;word_en text NOT NULL,<br>
+          &nbsp;&nbsp;definition_en text,<br>
+          &nbsp;&nbsp;examples_en text[],<br>
+          &nbsp;&nbsp;meaning_es text,<br>
+          &nbsp;&nbsp;uses_es text[],<br>
+          &nbsp;&nbsp;created_at timestamptz DEFAULT now()<br>
+          );
+        </code>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeSupabaseConfig()">Cancelar</button>
+      <button class="btn-primary" onclick="connectSupabase()">Conectar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let state = {
+  categories: [],
+  words: {},          // { category_id: [words] }
+  activeCat: null,
+  editingWord: null,
+  selectedEmoji: '📚',
+  supabase: null,     // { url, key }
+};
+
+// ─────────────────────────────────────────────
+// INIT — load from localStorage as demo
+// ─────────────────────────────────────────────
+function init() {
+  const saved = localStorage.getItem('gainz_data');
+  if (saved) {
+    const d = JSON.parse(saved);
+    state.categories = d.categories || [];
+    state.words = d.words || {};
+  }
+  const sbConf = localStorage.getItem('gainz_sb');
+  if (sbConf) {
+    state.supabase = JSON.parse(sbConf);
+    updateSbStatus(true);
+  }
+  buildEmojiPicker();
+  renderSidebar();
+}
+
+function persist() {
+  localStorage.setItem('gainz_data', JSON.stringify({
+    categories: state.categories,
+    words: state.words
+  }));
+}
+
+// ─────────────────────────────────────────────
+// SUPABASE
+// ─────────────────────────────────────────────
+function openSupabaseConfig() {
+  if (state.supabase) {
+    document.getElementById('sbUrl').value = state.supabase.url;
+    document.getElementById('sbKey').value = state.supabase.key;
+  }
+  document.getElementById('supabaseModal').classList.add('open');
+}
+
+function closeSupabaseConfig() {
+  document.getElementById('supabaseModal').classList.remove('open');
+}
+
+async function connectSupabase() {
+  const url = document.getElementById('sbUrl').value.trim();
+  const key = document.getElementById('sbKey').value.trim();
+  if (!url || !key) { showToast('Ingresa URL y Key', 'error'); return; }
+
+  try {
+    const res = await fetch(`${url}/rest/v1/categories?select=id&limit=1`, {
+      headers: { 'apikey': key, 'Authorization': `Bearer ${key}` }
+    });
+    if (!res.ok) throw new Error();
+    state.supabase = { url, key };
+    localStorage.setItem('gainz_sb', JSON.stringify(state.supabase));
+    updateSbStatus(true);
+    closeSupabaseConfig();
+    showToast('✅ Conectado a Supabase', 'success');
+    await syncFromSupabase();
+  } catch {
+    showToast('Error al conectar — revisa URL y Key', 'error');
+    updateSbStatus(false);
+  }
+}
+
+function updateSbStatus(ok) {
+  const dot = document.getElementById('sbDot');
+  const label = document.getElementById('sbLabel');
+  if (ok) {
+    dot.className = 'dot connected';
+    label.textContent = 'Supabase conectado';
+  } else {
+    dot.className = 'dot error';
+    label.textContent = 'Error conexión';
+  }
+}
+
+async function syncFromSupabase() {
+  if (!state.supabase) return;
+  const { url, key } = state.supabase;
+  const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
+
+  const [catsRes, wordsRes] = await Promise.all([
+    fetch(`${url}/rest/v1/categories?select=*&order=created_at.asc`, { headers }),
+    fetch(`${url}/rest/v1/words?select=*&order=created_at.asc`, { headers })
+  ]);
+
+  const cats = await catsRes.json();
+  const words = await wordsRes.json();
+
+  state.categories = cats;
+  state.words = {};
+  words.forEach(w => {
+    if (!state.words[w.category_id]) state.words[w.category_id] = [];
+    state.words[w.category_id].push(w);
+  });
+
+  persist();
+  renderSidebar();
+  if (state.activeCat) renderMain(state.activeCat);
+}
+
+async function sbPost(table, data) {
+  if (!state.supabase) return { id: crypto.randomUUID(), ...data };
+  const { url, key } = state.supabase;
+  const res = await fetch(`${url}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: {
+      'apikey': key,
+      'Authorization': `Bearer ${key}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(data)
+  });
+  const result = await res.json();
+  return Array.isArray(result) ? result[0] : result;
+}
+
+async function sbPatch(table, id, data) {
+  if (!state.supabase) return;
+  const { url, key } = state.supabase;
+  await fetch(`${url}/rest/v1/${table}?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: {
+      'apikey': key,
+      'Authorization': `Bearer ${key}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  });
+}
+
+async function sbDelete(table, id) {
+  if (!state.supabase) return;
+  const { url, key } = state.supabase;
+  await fetch(`${url}/rest/v1/${table}?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: { 'apikey': key, 'Authorization': `Bearer ${key}` }
+  });
+}
+
+// ─────────────────────────────────────────────
+// CATEGORIES
+// ─────────────────────────────────────────────
+function renderSidebar() {
+  const list = document.getElementById('categoriesList');
+  list.innerHTML = '';
+  state.categories.forEach(cat => {
+    const li = document.createElement('li');
+    li.className = 'category-item' + (state.activeCat?.id === cat.id ? ' active' : '');
+    li.innerHTML = `
+      <span class="cat-emoji">${cat.emoji || '📦'}</span>
+      <div class="cat-info">
+        <div class="cat-name">${cat.name}</div>
+        <div class="cat-count">${(state.words[cat.id] || []).length} palabras</div>
+      </div>
+      <div class="cat-actions">
+        <button class="btn-icon danger" onclick="deleteCategory('${cat.id}',event)" title="Eliminar">🗑</button>
+      </div>
+    `;
+    li.addEventListener('click', () => selectCategory(cat));
+    list.appendChild(li);
+  });
+}
+
+function selectCategory(cat) {
+  state.activeCat = cat;
+  renderSidebar();
+  renderMain(cat);
+}
+
+function renderMain(cat) {
+  const words = state.words[cat.id] || [];
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="cat-header">
+      <div class="cat-header-left">
+        <span class="cat-header-emoji">${cat.emoji || '📦'}</span>
+        <div>
+          <div class="cat-header-title">${cat.name}</div>
+          <div class="cat-header-meta">${words.length} palabras · última sync ${new Date().toLocaleDateString('es-MX')}</div>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="openWordModal()">＋ Agregar palabra</button>
+    </div>
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" placeholder="Buscar en ${cat.name}..." oninput="filterWords(this.value)">
+    </div>
+    <div class="words-list" id="wordsList">
+      ${words.length === 0 ? `
+        <div class="empty-state">
+          <div class="empty-icon">✍️</div>
+          <div class="empty-title">Sin palabras aún</div>
+          <div class="empty-sub">Agrega la primera palabra a esta categoría.</div>
+        </div>
+      ` : words.map(w => renderWordCard(w)).join('')}
+    </div>
+  `;
+}
+
+function filterWords(q) {
+  const words = state.words[state.activeCat?.id] || [];
+  const filtered = q ? words.filter(w =>
+    w.word_en?.toLowerCase().includes(q.toLowerCase()) ||
+    w.meaning_es?.toLowerCase().includes(q.toLowerCase())
+  ) : words;
+  const list = document.getElementById('wordsList');
+  if (list) list.innerHTML = filtered.map(w => renderWordCard(w)).join('');
+}
+
+function renderWordCard(w) {
+  return `
+    <div class="word-card" id="wc-${w.id}">
+      <div class="word-card-header" onclick="toggleWord('${w.id}')">
+        <div>
+          <div class="word-title">${w.word_en}</div>
+          <div class="word-es">${w.meaning_es || ''}</div>
+        </div>
+        <div class="word-card-actions">
+          <button class="btn-icon" onclick="editWord('${w.id}',event)" title="Editar">✏️</button>
+          <button class="btn-icon danger" onclick="deleteWord('${w.id}',event)" title="Eliminar">🗑</button>
+          <span style="color:var(--text3);font-size:12px;padding:0 4px">▾</span>
+        </div>
+      </div>
+      <div class="word-body" id="wb-${w.id}">
+        <div class="lang-block">
+          <div class="lang-label en">English</div>
+          <div class="field-label">Definition</div>
+          <div class="field-value">${w.definition_en || '—'}</div>
+          <div class="field-label">Examples</div>
+          <ul class="examples-list">
+            ${(w.examples_en || []).map(e => `<li>${e}</li>`).join('') || '<li style="font-style:normal;color:var(--text3)">No examples</li>'}
+          </ul>
+        </div>
+        <div class="lang-block">
+          <div class="lang-label es">Español</div>
+          <div class="field-label">Significado</div>
+          <div class="field-value">${w.meaning_es || '—'}</div>
+          <div class="field-label">Usos</div>
+          <ul class="examples-list">
+            ${(w.uses_es || []).map(e => `<li>${e}</li>`).join('') || '<li style="font-style:normal;color:var(--text3)">Sin usos</li>'}
+          </ul>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function toggleWord(id) {
+  const body = document.getElementById('wb-' + id);
+  if (body) body.classList.toggle('open');
+}
+
+function openCategoryModal() {
+  document.getElementById('fCatName').value = '';
+  state.selectedEmoji = '📚';
+  buildEmojiPicker();
+  document.getElementById('catModal').classList.add('open');
+}
+
+function closeCatModal() {
+  document.getElementById('catModal').classList.remove('open');
+}
+
+async function saveCategory() {
+  const name = document.getElementById('fCatName').value.trim();
+  if (!name) { showToast('Ingresa un nombre', 'error'); return; }
+
+  const data = { name, emoji: state.selectedEmoji };
+  const created = await sbPost('categories', data);
+  state.categories.push(created);
+  if (!state.words[created.id]) state.words[created.id] = [];
+  persist();
+  renderSidebar();
+  closeCatModal();
+  selectCategory(created);
+  showToast(`✅ Categoría "${name}" creada`, 'success');
+}
+
+async function deleteCategory(id, e) {
+  e.stopPropagation();
+  if (!confirm('¿Eliminar esta categoría y todas sus palabras?')) return;
+  await sbDelete('categories', id);
+  state.categories = state.categories.filter(c => c.id !== id);
+  delete state.words[id];
+  if (state.activeCat?.id === id) {
+    state.activeCat = null;
+    document.getElementById('mainContent').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📚</div>
+        <div class="empty-title">Selecciona una categoría</div>
+        <div class="empty-sub">Elige del panel izquierdo o crea una nueva.</div>
+      </div>`;
+  }
+  persist();
+  renderSidebar();
+  showToast('Categoría eliminada', 'success');
+}
+
+// ─────────────────────────────────────────────
+// WORDS
+// ─────────────────────────────────────────────
+function openWordModal(word = null) {
+  state.editingWord = word;
+  document.getElementById('wordModalTitle').textContent = word ? 'Editar palabra' : 'Nueva palabra';
+  document.getElementById('fWord').value = word?.word_en || '';
+  document.getElementById('fDefEn').value = word?.definition_en || '';
+  document.getElementById('fMeanEs').value = word?.meaning_es || '';
+
+  // Reset examples
+  const enG = document.getElementById('examplesEnGroup');
+  const esG = document.getElementById('examplesEsGroup');
+  enG.innerHTML = '';
+  esG.innerHTML = '';
+
+  const exEn = word?.examples_en || [''];
+  const exEs = word?.uses_es || [''];
+
+  exEn.forEach(v => addExampleRow('en', v));
+  exEs.forEach(v => addExampleRow('es', v));
+
+  document.getElementById('wordModal').classList.add('open');
+}
+
+function closeWordModal() {
+  document.getElementById('wordModal').classList.remove('open');
+}
+
+function addExample(lang) {
+  addExampleRow(lang, '');
+}
+
+function addExampleRow(lang, value = '') {
+  const group = document.getElementById(`examples${lang === 'en' ? 'En' : 'Es'}Group`);
+  const row = document.createElement('div');
+  row.className = 'example-row';
+  row.innerHTML = `
+    <input type="text" value="${value.replace(/"/g, '&quot;')}" placeholder="${lang === 'en' ? 'Write an example...' : 'Escribe un uso...'}">
+    <button class="btn-icon danger" onclick="removeExample(this)">✕</button>
+  `;
+  group.appendChild(row);
+}
+
+function removeExample(btn) {
+  btn.parentElement.remove();
+}
+
+function getExamples(groupId) {
+  return Array.from(document.querySelectorAll(`#${groupId} input`))
+    .map(i => i.value.trim()).filter(Boolean);
+}
+
+async function saveWord() {
+  const word_en = document.getElementById('fWord').value.trim();
+  if (!word_en) { showToast('Ingresa la palabra', 'error'); return; }
+
+  const data = {
+    category_id: state.activeCat.id,
+    word_en,
+    definition_en: document.getElementById('fDefEn').value.trim(),
+    examples_en: getExamples('examplesEnGroup'),
+    meaning_es: document.getElementById('fMeanEs').value.trim(),
+    uses_es: getExamples('examplesEsGroup'),
+  };
+
+  if (state.editingWord) {
+    await sbPatch('words', state.editingWord.id, data);
+    const list = state.words[state.activeCat.id];
+    const idx = list.findIndex(w => w.id === state.editingWord.id);
+    if (idx !== -1) list[idx] = { ...list[idx], ...data };
+    showToast('✅ Palabra actualizada', 'success');
+  } else {
+    const created = await sbPost('words', data);
+    if (!state.words[state.activeCat.id]) state.words[state.activeCat.id] = [];
+    state.words[state.activeCat.id].push(created);
+    showToast('✅ Palabra guardada', 'success');
+  }
+
+  persist();
+  closeWordModal();
+  renderMain(state.activeCat);
+  renderSidebar();
+}
+
+function editWord(id, e) {
+  e.stopPropagation();
+  const word = (state.words[state.activeCat?.id] || []).find(w => w.id === id);
+  if (word) openWordModal(word);
+}
+
+async function deleteWord(id, e) {
+  e.stopPropagation();
+  if (!confirm('¿Eliminar esta palabra?')) return;
+  await sbDelete('words', id);
+  state.words[state.activeCat.id] = state.words[state.activeCat.id].filter(w => w.id !== id);
+  persist();
+  renderMain(state.activeCat);
+  renderSidebar();
+  showToast('Palabra eliminada', 'success');
+}
+
+// ─────────────────────────────────────────────
+// EMOJI PICKER
+// ─────────────────────────────────────────────
+function buildEmojiPicker() {
+  const emojis = ['💼','📈','🏋️','🧠','🌍','🎯','💡','🔥','🎓','💪','🚀','⚡','🎨','🏆','💬','📱','🌱','🔑','✨','🎵','🍎','🏃','💻','🌐'];
+  const picker = document.getElementById('emojiPicker');
+  if (!picker) return;
+  picker.innerHTML = emojis.map(e => `
+    <div class="emoji-opt ${e === state.selectedEmoji ? 'selected' : ''}" onclick="selectEmoji('${e}')">${e}</div>
+  `).join('');
+}
+
+function selectEmoji(e) {
+  state.selectedEmoji = e;
+  buildEmojiPicker();
+}
+
+// ─────────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ─────────────────────────────────────────────
+// CLOSE MODALS ON OVERLAY CLICK
+// ─────────────────────────────────────────────
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => {
+    if (e.target === o) o.classList.remove('open');
+  });
+});
+
+init();
+</script>
+</body>
+</html>
